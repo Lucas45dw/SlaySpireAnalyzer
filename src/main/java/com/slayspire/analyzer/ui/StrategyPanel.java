@@ -31,6 +31,7 @@ public class StrategyPanel extends JPanel {
     private JLabel statusLabel;
     private JButton undoBtn;
     private JButton redoBtn;
+    private JTextArea buildCardDetailArea;
 
     public StrategyPanel(CardDAO cardDAO, RelicDAO relicDAO, OddsCalculator oddsCalculator) {
         this.cardDAO = cardDAO;
@@ -44,7 +45,7 @@ public class StrategyPanel extends JPanel {
 
     private void initComponents() {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.add(new JLabel("Character:"));
+        topPanel.add(new JLabel("Class:"));
         characterSelector = new JComboBox<>();
         characterSelector.addItem("All");
         try {
@@ -141,8 +142,20 @@ public class StrategyPanel extends JPanel {
         cardListModel = new DefaultListModel<>();
         cardList = new JList<>(cardListModel);
         cardList.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        cardList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) showBuildCardDetail();
+        });
         JPanel cardPanel = new JPanel(new BorderLayout());
-        cardPanel.add(new JScrollPane(cardList), BorderLayout.CENTER);
+        JSplitPane cardSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        cardSplit.setResizeWeight(0.6);
+        cardSplit.setTopComponent(new JScrollPane(cardList));
+        buildCardDetailArea = new JTextArea(6, 30);
+        buildCardDetailArea.setEditable(false);
+        buildCardDetailArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        buildCardDetailArea.setLineWrap(true);
+        buildCardDetailArea.setWrapStyleWord(true);
+        cardSplit.setBottomComponent(new JScrollPane(buildCardDetailArea));
+        cardPanel.add(cardSplit, BorderLayout.CENTER);
         JButton removeCardBtn = new JButton("Remove Selected Card");
         removeCardBtn.addActionListener(e -> removeSelectedCard());
         cardPanel.add(removeCardBtn, BorderLayout.SOUTH);
@@ -166,10 +179,21 @@ public class StrategyPanel extends JPanel {
         String query = searchCardField.getText().trim();
         if (query.isEmpty()) return;
         try {
-            List<Card> results = new SearchService().search(query);
+            SearchService ss = new SearchService();
+            List<Card> results = ss.search(query);
             searchResultsModel.clear();
+            if (results.isEmpty()) {
+                String newQuery = JOptionPane.showInputDialog(this,
+                        "No cards found for '" + query + "'. Enter a different name:",
+                        "Not Found", JOptionPane.WARNING_MESSAGE);
+                if (newQuery != null && !newQuery.trim().isEmpty()) {
+                    searchCardField.setText(newQuery.trim());
+                    searchCards();
+                }
+                return;
+            }
             for (Card c : results) {
-                searchResultsModel.addElement(c.getId() + "|" + c.getName() + " (" + c.getRarity() + ", " + c.getColor() + ")");
+                searchResultsModel.addElement(c.getId() + "|" + c.getName() + " (" + c.getRarity() + ", " + capitalize(c.getColor()) + ")");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -192,10 +216,15 @@ public class StrategyPanel extends JPanel {
             if (relicSearchResultsList == null) {
                 relicSearchResultsList = new JList<>(relicSearchResultsModel);
                 relicSearchResultsList.setFont(new Font("Monospaced", Font.PLAIN, 11));
-
-                JScrollPane scrollPane = findSearchResultsScrollPane();
-                if (scrollPane != null) {
-                    scrollPane.setViewportView(relicSearchResultsList);
+                Component parent = searchRelicField.getParent().getParent();
+                if (parent instanceof JPanel searchPanel) {
+                    for (int i = 0; i < searchPanel.getComponentCount(); i++) {
+                        Component c = searchPanel.getComponent(i);
+                        if (c instanceof JScrollPane) {
+                            ((JScrollPane) c).setViewportView(relicSearchResultsList);
+                            break;
+                        }
+                    }
                 }
             } else {
                 relicSearchResultsList.setModel(relicSearchResultsModel);
@@ -203,22 +232,6 @@ public class StrategyPanel extends JPanel {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    private JScrollPane findSearchResultsScrollPane() {
-        for (Component c : getComponents()) {
-            if (c instanceof JSplitPane) {
-                Component left = ((JSplitPane) c).getLeftComponent();
-                if (left instanceof JPanel) {
-                    for (Component comp : ((JPanel) left).getComponents()) {
-                        if (comp instanceof JScrollPane) {
-                            return (JScrollPane) comp;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     private void addSelectedCard() {
@@ -250,6 +263,37 @@ public class StrategyPanel extends JPanel {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showBuildCardDetail() {
+        int idx = cardList.getSelectedIndex();
+        if (idx >= 0) {
+            List<Card> cards = strategyBuilder.getSelectedCards();
+            if (idx < cards.size()) {
+                Card c = cards.get(idx);
+                StringBuilder d = new StringBuilder();
+                d.append(c.getName()).append("  (").append(c.getCost()).append(" cost)\n");
+                d.append(c.getType()).append("  |  ").append(c.getRarity()).append("\n");
+                d.append("Class: ").append(capitalize(c.getColor())).append("\n\n");
+                if (c.getDescription() != null) {
+                    String desc = c.getDescription()
+                            .replace("[gold]", "").replace("[/gold]", "")
+                            .replace("[energy:1]", "[E]").replace("[energy:2]", "[EE]")
+                            .replace("[energy:3]", "[EEE]");
+                    d.append(desc).append("\n");
+                }
+                if (c.hasUpgrade() && c.getUpgradeDescription() != null) {
+                    d.append("\nUpgrade: ").append(c.getUpgradeDescription()
+                            .replace("[gold]", "").replace("[/gold]", "")
+                            .replace("[energy:1]", "[E]").replace("[energy:2]", "[EE]")
+                            .replace("[energy:3]", "[EEE]"));
+                }
+                buildCardDetailArea.setText(d.toString());
+                buildCardDetailArea.setCaretPosition(0);
+                return;
+            }
+        }
+        buildCardDetailArea.setText("");
     }
 
     private void removeSelectedCard() {
@@ -287,6 +331,7 @@ public class StrategyPanel extends JPanel {
 
     private void refreshBuildDisplay() {
         cardListModel.clear();
+        buildCardDetailArea.setText("");
         for (Card c : strategyBuilder.getSelectedCards()) {
             cardListModel.addElement(c.getName() + " (" + c.getRarity() + ", " + c.getCost() + " cost)");
         }
@@ -311,7 +356,7 @@ public class StrategyPanel extends JPanel {
                     .distinct()
                     .collect(Collectors.toList());
 
-            sb.append("Character: ").append(selectedChar).append("\n");
+            sb.append("Class: ").append(selectedChar).append("\n");
 
             if (color != null && !raritiesInBuild.isEmpty()) {
                 double cumulative = oddsCalculator.getCumulativeOdds(color, raritiesInBuild);

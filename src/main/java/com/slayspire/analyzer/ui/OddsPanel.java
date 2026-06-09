@@ -25,7 +25,7 @@ public class OddsPanel extends JPanel {
 
     private void initComponents() {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.add(new JLabel("Character:"));
+        topPanel.add(new JLabel("Class:"));
         characterSelector = new JComboBox<>();
         characterSelector.addItem("All");
         try {
@@ -68,35 +68,24 @@ public class OddsPanel extends JPanel {
             String selected = characterSelector.getSelectedItem() == null ? "All" : characterSelector.getSelectedItem().toString();
             String color = selected.equalsIgnoreCase("All") ? null : selected.toLowerCase();
 
-            sb.append("Card Pool Analysis\n");
-            sb.append("==================\n\n");
-
             if (color != null) {
                 int total = oddsCalculator.getTotalPoolSize(color);
-                sb.append("Character: ").append(selected).append("\n");
-                sb.append("Total ").append(selected).append(" cards: ").append(total).append("\n\n");
-                sb.append("Rarity Breakdown:\n");
+                double perCardOdds = total > 0 ? 100.0 / total : 0;
+                sb.append(selected).append(" \u2014 ").append(total).append(" cards\n");
+                sb.append("========================================\n\n");
+                sb.append(String.format("Each card: 1/%d = %.2f%%\n", total, perCardOdds));
+                sb.append(String.format("(%d cards, each equally likely)\n\n", total));
 
+                sb.append("Cards by rarity:\n");
                 for (String rarity : cardDAO.getAllRarities()) {
                     int count = oddsCalculator.getPoolSize(color, rarity);
                     if (count > 0) {
-                        double odds = oddsCalculator.getOdds(color, rarity);
-                        sb.append(String.format("  %-15s %3d cards  (%5.1f%% chance)", rarity, count, odds)).append("\n");
-                    }
-                }
-
-                sb.append("\nProbability of finding a specific card by rarity:\n");
-                sb.append("  (Assuming uniform distribution within each rarity tier)\n\n");
-                for (String rarity : cardDAO.getAllRarities()) {
-                    int count = oddsCalculator.getPoolSize(color, rarity);
-                    if (count > 0) {
-                        double specificCardOdds = oddsCalculator.getOdds(color, rarity) / count;
-                        sb.append(String.format("  %-15s 1/%d = %.2f%%", rarity, count, specificCardOdds)).append("\n");
+                        sb.append(String.format("  %-15s %3d cards", rarity, count)).append("\n");
                     }
                 }
             } else {
-                sb.append("Select a character above to see card pool odds.\n\n");
-                sb.append("All Characters:\n");
+                sb.append("Select a class above to see card pool odds.\n\n");
+                sb.append("All Classes:\n");
                 Map<String, Double> allOdds = oddsCalculator.getAllColorOdds();
                 for (Map.Entry<String, Double> entry : allOdds.entrySet()) {
                     int total = oddsCalculator.getTotalPoolSize(entry.getKey());

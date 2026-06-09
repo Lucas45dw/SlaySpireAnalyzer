@@ -82,7 +82,7 @@ public class MainFrame extends JFrame {
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("SansSerif", Font.PLAIN, 13));
 
-        cardCodexPanel = new CardCodexPanel(cardDAO, searchService);
+        cardCodexPanel = new CardCodexPanel(cardDAO, searchService, oddsCalculator);
         tabbedPane.addTab("Card Codex", cardCodexPanel);
 
         relicCodexPanel = new RelicCodexPanel(relicDAO);

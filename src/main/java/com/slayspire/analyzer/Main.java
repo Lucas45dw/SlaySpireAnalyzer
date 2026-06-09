@@ -3,10 +3,25 @@ package com.slayspire.analyzer;
 import com.slayspire.analyzer.database.DatabaseConnection;
 import com.slayspire.analyzer.ui.MainFrame;
 import javax.swing.*;
+import java.io.*;
 import java.sql.SQLException;
 
 public class Main {
+
+    public static void printFileContents(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
+        // printFileContents("builds/example.txt");
+
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

@@ -1,6 +1,7 @@
 package com.slayspire.analyzer.ui;
 
 import com.slayspire.analyzer.database.CardDAO;
+import com.slayspire.analyzer.database.OddsCalculator;
 import com.slayspire.analyzer.database.SearchService;
 import com.slayspire.analyzer.models.Card;
 import javax.swing.*;
@@ -13,6 +14,7 @@ import java.util.List;
 public class CardCodexPanel extends JPanel {
     private CardDAO cardDAO;
     private SearchService searchService;
+    private OddsCalculator oddsCalculator;
     private CardTableModel tableModel;
     private JTable cardTable;
     private JComboBox<String> colorFilter;
@@ -23,9 +25,10 @@ public class CardCodexPanel extends JPanel {
     private List<Card> currentCards;
     private CardDetailPanel detailPanel;
 
-    public CardCodexPanel(CardDAO cardDAO, SearchService searchService) {
+    public CardCodexPanel(CardDAO cardDAO, SearchService searchService, OddsCalculator oddsCalculator) {
         this.cardDAO = cardDAO;
         this.searchService = searchService;
+        this.oddsCalculator = oddsCalculator;
         this.currentCards = new ArrayList<>();
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -47,7 +50,7 @@ public class CardCodexPanel extends JPanel {
         searchPanel.add(searchBtn);
 
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filterPanel.add(new JLabel("Character:"));
+        filterPanel.add(new JLabel("Class:"));
         colorFilter = new JComboBox<>();
         colorFilter.addActionListener(e -> refreshData());
         filterPanel.add(colorFilter);
@@ -93,6 +96,7 @@ public class CardCodexPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         detailPanel = new CardDetailPanel();
+        detailPanel.setOddsCalculator(oddsCalculator);
         add(detailPanel, BorderLayout.EAST);
     }
 
@@ -168,21 +172,24 @@ public class CardCodexPanel extends JPanel {
     }
 
     private void showCardDetail() {
-        int row = cardTable.getSelectedRow();
-        if (row >= 0 && row < currentCards.size()) {
-            Card card = currentCards.get(row);
-            detailPanel.showCard(card);
+        int viewRow = cardTable.getSelectedRow();
+        if (viewRow >= 0) {
+            int modelRow = cardTable.convertRowIndexToModel(viewRow);
+            if (modelRow >= 0 && modelRow < currentCards.size()) {
+                Card card = currentCards.get(modelRow);
+                detailPanel.showCard(card);
+            }
         }
     }
 
-    private String capitalize(String s) {
+    static String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     static class CardTableModel extends AbstractTableModel {
         private List<Card> cards = new ArrayList<>();
-        private final String[] columns = {"#", "Name", "Cost", "Type", "Rarity", "Character"};
+        private final String[] columns = {"#", "Name", "Cost", "Type", "Rarity", "Class"};
 
         void setCards(List<Card> cards) {
             this.cards = new ArrayList<>(cards);
@@ -207,7 +214,7 @@ public class CardCodexPanel extends JPanel {
                 case 2 -> c.getFormattedCost();
                 case 3 -> c.getType();
                 case 4 -> c.getRarity();
-                case 5 -> c.getColor();
+                case 5 -> capitalize(c.getColor());
                 default -> "";
             };
         }

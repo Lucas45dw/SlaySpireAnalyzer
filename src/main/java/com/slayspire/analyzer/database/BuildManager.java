@@ -53,8 +53,18 @@ public class BuildManager {
                 }
             }
         }
-        Collections.sort(builds);
+        builds.sort(String.CASE_INSENSITIVE_ORDER);
         return builds;
+    }
+
+    public boolean buildExists(String name) {
+        String filename = SAVES_DIR + "/" + sanitizeFilename(name) + ".txt";
+        return new File(filename).exists();
+    }
+
+    public String readRawFile(String name) throws IOException {
+        String filename = SAVES_DIR + "/" + sanitizeFilename(name) + ".txt";
+        return Files.readString(Paths.get(filename));
     }
 
     public BuildData loadBuild(String name) throws IOException {

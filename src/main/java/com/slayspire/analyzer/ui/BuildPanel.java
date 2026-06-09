@@ -15,6 +15,7 @@ public class BuildPanel extends JPanel {
     private DefaultListModel<String> buildListModel;
     private JList<String> buildList;
     private JLabel statusLabel;
+    private JTextArea previewArea;
 
     public BuildPanel(StrategyPanel strategyPanel) {
         this.strategyPanel = strategyPanel;
@@ -37,6 +38,10 @@ public class BuildPanel extends JPanel {
         buildNameField = new JTextField(20);
         topPanel.add(buildNameField, gbc);
         gbc.gridx = 2; gbc.weightx = 0;
+        JButton loadFileBtn = new JButton("Load from File");
+        loadFileBtn.addActionListener(e -> loadFromFile());
+        topPanel.add(loadFileBtn, gbc);
+        gbc.gridx = 3;
         JButton saveBtn = new JButton("Save Current Build");
         saveBtn.addActionListener(e -> saveBuild());
         topPanel.add(saveBtn, gbc);
@@ -69,11 +74,9 @@ public class BuildPanel extends JPanel {
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createTitledBorder("Build Preview"));
-        JTextArea previewArea = new JTextArea();
+        previewArea = new JTextArea();
         previewArea.setEditable(false);
         previewArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        previewArea.setLineWrap(true);
-        previewArea.setWrapStyleWord(true);
         rightPanel.add(new JScrollPane(previewArea), BorderLayout.CENTER);
 
         buildList.addListSelectionListener(e -> {
@@ -125,6 +128,16 @@ public class BuildPanel extends JPanel {
         }
 
         try {
+            if (buildManager.buildExists(name)) {
+                String newName = JOptionPane.showInputDialog(this,
+                        "File '" + name + "' already exists. Enter a different name:",
+                        "File Exists", JOptionPane.WARNING_MESSAGE);
+                if (newName == null || newName.trim().isEmpty()) {
+                    statusLabel.setText("Save cancelled.");
+                    return;
+                }
+                name = newName.trim();
+            }
             buildManager.saveBuild(name, cards, relics);
             statusLabel.setText("Build '" + name + "' saved successfully!");
             refreshBuildList();
@@ -175,6 +188,22 @@ public class BuildPanel extends JPanel {
             buildManager.deleteBuild(selected);
             statusLabel.setText("Build '" + selected + "' deleted.");
             refreshBuildList();
+        }
+    }
+
+    private void loadFromFile() {
+        String name = buildNameField.getText().trim();
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Enter a build name to load.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            String content = buildManager.readRawFile(name);
+            previewArea.setText(content);
+            statusLabel.setText("Loaded file: " + name + ".txt");
+        } catch (IOException e) {
+            previewArea.setText("");
+            statusLabel.setText("File not found: " + name + ".txt");
         }
     }
 

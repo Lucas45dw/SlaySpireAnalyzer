@@ -95,6 +95,8 @@ public class Card {
     public void setBlock(String block) { this.block = block; }
     public void setCardsDraw(String cardsDraw) { this.cardsDraw = cardsDraw; }
     public void setEnergyGain(String energyGain) { this.energyGain = energyGain; }
+    public void setXCost(boolean isXCost) { this.isXCost = isXCost; }
+    public void setXStarCost(boolean isXStarCost) { this.isXStarCost = isXStarCost; }
 
     public String getFormattedCost() {
         if (isXCost) return "X";

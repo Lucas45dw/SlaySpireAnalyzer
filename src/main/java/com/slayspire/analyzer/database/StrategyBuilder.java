@@ -88,6 +88,25 @@ public class StrategyBuilder {
     public boolean canUndo() { return !undoStack.isEmpty(); }
     public boolean canRedo() { return !redoStack.isEmpty(); }
 
+    public void printStateHistory() {
+        System.out.println("=== Undo/Redo State History ===");
+        System.out.println("Current build: " + selectedCards.size() + " cards, " + selectedRelics.size() + " relics");
+        System.out.println("Undo stack size: " + undoStack.size());
+        System.out.println("Redo stack size: " + redoStack.size());
+
+        int i = 0;
+        for (BuildState state : undoStack) {
+            System.out.println("  Undo[" + i + "]: " + state.cards.size() + " cards, " + state.relics.size() + " relics");
+            i++;
+        }
+        i = 0;
+        for (BuildState state : redoStack) {
+            System.out.println("  Redo[" + i + "]: " + state.cards.size() + " cards, " + state.relics.size() + " relics");
+            i++;
+        }
+        System.out.println("=================================");
+    }
+
     static class BuildState {
         final List<Card> cards;
         final List<Relic> relics;

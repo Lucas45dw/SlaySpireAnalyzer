@@ -44,7 +44,7 @@ public class RelicDAO {
             sql.append(" AND rarity = ?");
             params.add(rarity);
         }
-        sql.append(" ORDER BY compendium_order");
+        sql.append(" ORDER BY CAST(compendium_order AS INTEGER)");
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {

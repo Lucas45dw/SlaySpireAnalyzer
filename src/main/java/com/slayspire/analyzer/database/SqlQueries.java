@@ -1,11 +1,10 @@
 package com.slayspire.analyzer.database;
-
 public class SqlQueries {
     public static final String ALL_CARDS =
-        "SELECT * FROM cards ORDER BY compendium_order";
+        "SELECT * FROM cards ORDER BY CAST(compendium_order AS INTEGER)";
 
     public static final String SEARCH_CARDS =
-        "SELECT * FROM cards WHERE LOWER(name) LIKE ? ORDER BY compendium_order";
+        "SELECT * FROM cards WHERE LOWER(name) LIKE ? ORDER BY CAST(compendium_order AS INTEGER)";
 
     public static final String FILTER_CARDS_BASE =
         "SELECT * FROM cards WHERE 1=1";
@@ -29,10 +28,10 @@ public class SqlQueries {
         "SELECT COUNT(*) FROM cards";
 
     public static final String ALL_RELICS =
-        "SELECT * FROM relics ORDER BY compendium_order";
+        "SELECT * FROM relics ORDER BY CAST(compendium_order AS INTEGER)";
 
     public static final String SEARCH_RELICS =
-        "SELECT * FROM relics WHERE LOWER(name) LIKE ? ORDER BY compendium_order";
+        "SELECT * FROM relics WHERE LOWER(name) LIKE ? ORDER BY CAST(compendium_order AS INTEGER)";
 
     public static final String FILTER_RELICS_BASE =
         "SELECT * FROM relics WHERE 1=1";

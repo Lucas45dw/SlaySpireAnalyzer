@@ -141,20 +141,23 @@ public class RelicCodexPanel extends JPanel {
     }
 
     private void showRelicDetail() {
-        int row = relicTable.getSelectedRow();
-        if (row >= 0 && row < currentRelics.size()) {
-            Relic r = currentRelics.get(row);
-            String desc = r.getDescription() != null ? r.getDescription() : "No description";
-            String flavor = r.getFlavor() != null ? "\n\n\"" + r.getFlavor() + "\"" : "";
-            String price = r.getMerchantPrice() != null && !r.getMerchantPrice().isEmpty()
-                    ? "\nMerchant price: " + r.getMerchantPrice() : "";
-            detailArea.setText(desc.replace("[gold]", "").replace("[/gold]", "")
-                    .replace("[blue]", "").replace("[/blue]", "") + flavor + price);
-            detailArea.setCaretPosition(0);
+        int viewRow = relicTable.getSelectedRow();
+        if (viewRow >= 0) {
+            int modelRow = relicTable.convertRowIndexToModel(viewRow);
+            if (modelRow >= 0 && modelRow < currentRelics.size()) {
+                Relic r = currentRelics.get(modelRow);
+                String desc = r.getDescription() != null ? r.getDescription() : "No description";
+                String flavor = r.getFlavor() != null ? "\n\n\"" + r.getFlavor() + "\"" : "";
+                String price = r.getMerchantPrice() != null && !r.getMerchantPrice().isEmpty()
+                        ? "\nMerchant price: " + r.getMerchantPrice() : "";
+                detailArea.setText(desc.replace("[gold]", "").replace("[/gold]", "")
+                        .replace("[blue]", "").replace("[/blue]", "") + flavor + price);
+                detailArea.setCaretPosition(0);
+            }
         }
     }
 
-    private String capitalize(String s) {
+    static String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
@@ -183,7 +186,7 @@ public class RelicCodexPanel extends JPanel {
             return switch (col) {
                 case 0 -> row + 1;
                 case 1 -> r.getName();
-                case 2 -> r.getPool();
+                case 2 -> capitalize(r.getPool());
                 case 3 -> r.getRarity();
                 default -> "";
             };

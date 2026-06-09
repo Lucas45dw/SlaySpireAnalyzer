@@ -1,5 +1,6 @@
 package com.slayspire.analyzer.ui;
 
+import com.slayspire.analyzer.database.OddsCalculator;
 import com.slayspire.analyzer.models.Card;
 import javax.swing.*;
 import java.awt.*;
@@ -10,16 +11,22 @@ public class CardDetailPanel extends JPanel {
     private JLabel typeLabel;
     private JLabel rarityLabel;
     private JLabel characterLabel;
+    private JLabel oddsLabel;
     private JTextArea descriptionArea;
     private JLabel upgradeHeader;
     private JTextArea upgradeArea;
     private JLabel noCardLabel;
+    private OddsCalculator oddsCalculator;
 
     public CardDetailPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Card Details"));
         setPreferredSize(new Dimension(350, 0));
         initComponents();
+    }
+
+    public void setOddsCalculator(OddsCalculator calculator) {
+        this.oddsCalculator = calculator;
     }
 
     private void initComponents() {
@@ -42,9 +49,12 @@ public class CardDetailPanel extends JPanel {
         infoPanel.add(new JLabel("Rarity:"));
         rarityLabel = new JLabel(" ");
         infoPanel.add(rarityLabel);
-        infoPanel.add(new JLabel("Character:"));
+        infoPanel.add(new JLabel("Class:"));
         characterLabel = new JLabel(" ");
         infoPanel.add(characterLabel);
+        infoPanel.add(new JLabel("Odds:"));
+        oddsLabel = new JLabel(" ");
+        infoPanel.add(oddsLabel);
         add(infoPanel);
 
         add(Box.createVerticalStrut(10));
@@ -85,6 +95,18 @@ public class CardDetailPanel extends JPanel {
         typeLabel.setText(card.getType());
         rarityLabel.setText(card.getRarity());
         characterLabel.setText(capitalize(card.getColor()));
+
+        if (oddsCalculator != null) {
+            String color = card.getColor();
+            int totalForClass = oddsCalculator.getTotalPoolSize(color);
+            double perCardOdds = totalForClass > 0 ? 100.0 / totalForClass : 0;
+            oddsLabel.setText(String.format("1/%d = %.2f%%", totalForClass, perCardOdds));
+            oddsLabel.setToolTipText(String.format(
+                    "%s has %d cards total\nEach card: 100%% \u00F7 %d = %.2f%%",
+                    capitalize(color), totalForClass, totalForClass, perCardOdds));
+        } else {
+            oddsLabel.setText(" ");
+        }
 
         String desc = card.getDescription();
         if (desc != null) {
@@ -132,6 +154,7 @@ public class CardDetailPanel extends JPanel {
         typeLabel.setText(" ");
         rarityLabel.setText(" ");
         characterLabel.setText(" ");
+        oddsLabel.setText(" ");
         descriptionArea.setText("");
         upgradeHeader.setVisible(false);
         upgradeArea.setVisible(false);

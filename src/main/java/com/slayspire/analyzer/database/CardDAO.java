@@ -48,7 +48,7 @@ public class CardDAO {
             sql.append(" AND type = ?");
             params.add(type);
         }
-        sql.append(" ORDER BY compendium_order");
+        sql.append(" ORDER BY CAST(compendium_order AS INTEGER)");
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
@@ -147,6 +147,8 @@ public class CardDAO {
         card.setKeywords(rs.getString("keywords"));
         card.setKeywordsKey(rs.getString("keywords_key"));
         card.setCompendiumOrder(rs.getString("compendium_order"));
+        card.setXCost("1".equals(rs.getString("is_x_cost")));
+        card.setXStarCost("1".equals(rs.getString("is_x_star_cost")));
         card.setDamage(rs.getString("damage"));
         card.setBlock(rs.getString("block"));
         card.setCardsDraw(rs.getString("cards_draw"));
